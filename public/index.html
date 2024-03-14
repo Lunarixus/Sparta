@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Youtube2FLAC</title>
+    <link rel="stylesheet" href="css/dark_theme.css">
+</head>
+<body>
+    <div id="backgroundContainer"></div>
+
+    <div class="container" id="downloadContainer">
+        <h1>YouTube2FLAC</h1>
+        <p class="made-by">Made by @Lunarixus</p>
+        <div id="videoInfo" style="display: none;">
+            <img id="thumbnail" src="" alt="Thumbnail">
+            <div id="videoDetails">
+                <h2 id="videoTitle"></h2>
+                <p id="videoPlatform"></p>
+            </div>
+        </div>
+        <form id="downloadForm">
+            <label for="url">Enter YouTube URL:</label>
+            <input type="text" id="url" name="url" required>
+            <br>
+            <label for="quality">Select quality:</label>
+            <select id="quality" name="quality">
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high" selected>High</option>
+            </select>
+            <br>
+            <label for="format">Select format:</label>
+            <select id="format" name="format">
+                <option value="flac" selected>FLAC</option>
+                <option value="mp3">MP3</option>
+                <option value="ogg">OGG</option>
+                <option value="mp4">MP4</option>
+            </select>
+            <br>
+            <button type="button" id="downloadButton" class="btn" onClick="submitForm()" disabled>Download</button>
+        </form>   
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+
+    <div class="console-window" id="consoleWindow">
+        <div class="title-bar" onmousedown="startDragging(event)">
+            <div class="title">Terminal</div>
+            <div class="menu-icons">
+                <button id="green-circle" onClick="minimizeWindow()"></button>
+                <button id="amber-circle" onClick="toggleMaximize()"></button>
+                <button id="red-circle" onClick="closeWindow()"></button>
+            </div>
+        </div>
+        <div class="scroll-container" id="scrollContainer">
+            <div class="scroll-content" id="scrollContent"></div>
+        </div>
+        <div class="resize-handle" onmousedown="startResize(event)" id="resizeHandle"></div>
+    </div>
+
+    <script src="js/UIHandler.js"></script>
+    <script src="js/WebSocket.js"></script>
+    <script src="js/thumbnailGrabber.js"></script>
+    <script>
+        window.onload = function() {
+            handleInputChange();
+            minimizeWindow();
+        };
+    </script>
+</body>
+</html>
