@@ -1,0 +1,9 @@
+[http]
+enabled = true
+port = 80
+
+[https]
+enabled = false
+port = 443
+keyPath = "path/to/private/key.pem"
+certPath = "path/to/certificate/cert.pem"

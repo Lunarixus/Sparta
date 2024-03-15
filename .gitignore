@@ -19,3 +19,6 @@ node_modules/
 # Downloaded files
 thumbnails/
 downloads/
+
+# User Configs
+config.toml

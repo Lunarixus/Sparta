@@ -1,4 +1,4 @@
-/* http.js -- Set up HTTP server and API endpoints.
+/* http.js -- Set up HTTP and HTTPS servers and API endpoints.
  *
  * Copyright (C) 2024 Lunarixus.
  *
@@ -8,18 +8,31 @@
 
 const express = require('express');
 const http = require('http');
+const https = require('https');
 const WebSocket = require('ws');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
+const config = require('./config');
 const { ytDlpWrap, downloadYouTubeThumbnail, getTitle } = require('./ytdlpclient');
 const { DOWNLOADS_DIR, THUMBNAILS_DIR, convertAndDownloadAudio, convertAndDownloadVideo, getServiceType, sanitizeFilename } = require('./utils');
-const fs = require('fs').promises;
-const path = require('path');
 
 const app = express();
-const server = http.createServer(app);
+let server = {};
+
+if (config.https.enabled) {
+    const httpsOptions = {
+        key: fs.readFileSync(config.https.keyPath),
+        cert: fs.readFileSync(config.https.certPath)
+    };
+    server = https.createServer(httpsOptions, app);
+} else {
+    server = http.createServer(app);
+}
+
 const wss = new WebSocket.Server({ server });
 
-const PORT = 80;
+const PORT = config.http.port;
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -155,5 +168,5 @@ app.post('/thumbnail/complete', (req, res) => {
 });
 
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on ${config.https.enabled ? 'HTTPS' : 'HTTP'} port ${PORT}`);
 });
