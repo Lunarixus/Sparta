@@ -11,10 +11,10 @@ const http = require('http');
 const https = require('https');
 const WebSocket = require('ws');
 const cors = require('cors');
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const config = require('./config');
-const { ytDlpWrap, downloadYouTubeThumbnail, getTitle } = require('./ytdlpclient');
+const { ytDlpWrap, getTitle, downloadYouTubeThumbnail, downloadSoundCloudArtwork } = require('./ytdlpclient');
 const { DOWNLOADS_DIR, THUMBNAILS_DIR, convertAndDownloadAudio, convertAndDownloadVideo, getServiceType, sanitizeFilename } = require('./utils');
 
 const app = express();
@@ -40,6 +40,7 @@ app.use(cors());
 
 app.use('/downloads', express.static(DOWNLOADS_DIR));
 app.use('/thumbnails', express.static(THUMBNAILS_DIR));
+app.use('/public/img', express.static('/public/img'));
 
 wss.on('connection', function connection(ws) {
     console.log('WebSocket connected');
@@ -77,18 +78,10 @@ app.post('/download', async (req, res) => {
         let videoTitle = await getTitle(url);
         let sanitizedFilename = sanitizeFilename(videoTitle);
 
-        if (format === 'flac') {
+        if (format === 'flac' || format === 'mp3' || format === 'ogg') {
             filePath = await convertAndDownloadAudio(ytDlpWrap, url, quality, sanitizedFilename, format);
-            contentType = 'audio/flac';
-            sanitizedFilename += '.flac';
-        } else if (format === 'mp3') {
-            filePath = await convertAndDownloadAudio(ytDlpWrap, url, quality, sanitizedFilename, format);
-            contentType = 'audio/mp3';
-            sanitizedFilename += '.mp3';
-        } else if (format === 'ogg') {
-            filePath = await convertAndDownloadAudio(ytDlpWrap, url, quality, sanitizedFilename, format);
-            contentType = 'audio/ogg';
-            sanitizedFilename += '.ogg';
+            contentType = `audio/${format}`;
+            sanitizedFilename += `.${format}`;
         } else if (format === 'mp4') {
             filePath = await convertAndDownloadVideo(ytDlpWrap, url, quality, sanitizedFilename);
             contentType = 'video/mp4';
@@ -144,11 +137,26 @@ app.post('/thumbnail', async (req, res) => {
     const { url } = req.body;
 
     try {
-        const thumbnailFilePath = await downloadYouTubeThumbnail(url);
+        const serviceType = await getServiceType(url);
+        let thumbnailFilePath;
+        
+        if (serviceType === 'YouTube' || serviceType === 'YouTube (Shortlink)' || serviceType === 'YouTube Music') {
+            thumbnailFilePath = await downloadYouTubeThumbnail(url);
+        } else if (serviceType === 'SoundCloud') {
+            if (!config.soundcloud || !config.soundcloud.api_key) {
+                console.log('SoundCloud API key is not provided. Skipping SoundCloud artwork download.');
+                res.status(200).send({ thumbnailFilePath: null });
+                return;
+            }
+            thumbnailFilePath = await downloadSoundCloudArtwork(url);
+        } else {
+            throw new Error('Unsupported service type');
+        }
+
         res.json({ thumbnailFilePath });
     } catch (error) {
         console.error('Error handling thumbnail request:', error);
-        res.status(500).send('Failed to download YouTube thumbnail. Check server logs for details.');
+        res.status(500).send('Failed to download thumbnail. Check server logs for details.');
     }
 });
 
@@ -156,9 +164,11 @@ app.post('/thumbnail/complete', (req, res) => {
     const { thumbnailFilePath } = req.body;
 
     try {
-        fs.unlink(thumbnailFilePath)
-        .then(() => console.log('Thumbnail deleted:', thumbnailFilePath))
-        .catch(error => console.error('Error deleting thumbnail:', error));
+        if (thumbnailFilePath && thumbnailFilePath !== '/img/soundcloudlogo.png') {
+            fs.unlink(thumbnailFilePath)
+            .then(() => console.log('Thumbnail deleted:', thumbnailFilePath))
+            .catch(error => console.error('Error deleting thumbnail:', error));
+        }
 
         res.sendStatus(200);
     } catch (error) {

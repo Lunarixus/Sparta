@@ -15,6 +15,8 @@ const path = require('path');
 const { DOWNLOADS_DIR, THUMBNAILS_DIR } = require('./utils');
 const { executeFFmpegCommand } = require('./ffmpeg');
 
+const config = require('./config');
+
 const ytDlpName = process.platform === 'win32' ? 'YoutubeDL' : 'yt-dlp';
 const ytDlpBinaryPath = which.sync(ytDlpName);
 const ytDlpWrap = new YTDlpWrap(ytDlpBinaryPath);
@@ -35,6 +37,47 @@ async function downloadYouTubeThumbnail(url) {
         return thumbnailFilePath;
     } catch (error) {
         console.error('Error downloading YouTube thumbnail:', error);
+        throw error;
+    }
+}
+
+async function downloadSoundCloudArtwork(url) {
+    try {
+        const soundCloudApiKey = config.soundcloud.api_key;
+
+        if (!soundCloudApiKey) {
+            console.log('SoundCloud API key is empty. Skipping SoundCloud artwork download.');
+            return null;
+        }
+
+        const trackId = url.split('/').pop();        
+        const apiUrl = `https://api.soundcloud.com/tracks/${trackId}?client_id=${soundCloudApiKey}`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+            throw new Error('Failed to fetch SoundCloud track metadata');
+        }
+        const trackData = await response.json();
+
+        if (!trackData.artwork_url) {
+            throw new Error('No artwork available for the SoundCloud track');
+        }
+
+        const artworkUrl = trackData.artwork_url.replace('-large', '-t500x500');
+        const artworkResponse = await fetch(artworkUrl);
+        if (!artworkResponse.ok) {
+            throw new Error('Failed to fetch SoundCloud artwork');
+        }
+        const artworkBuffer = Buffer.from(await artworkResponse.arrayBuffer());
+
+        await fs.mkdir(THUMBNAILS_DIR, { recursive: true });
+        const artworkFilePath = path.join(THUMBNAILS_DIR, `${trackId}.jpg`);
+        await fs.writeFile(artworkFilePath, artworkBuffer);
+        
+        console.log('Artwork saved locally:', artworkFilePath);
+        return artworkFilePath;
+    } catch (error) {
+        console.error('Error downloading SoundCloud artwork:', error);
         throw error;
     }
 }
@@ -65,5 +108,6 @@ async function getTitle(videoUrl) {
 module.exports = {
     ytDlpWrap,
     downloadYouTubeThumbnail,
+    downloadSoundCloudArtwork,
     getTitle,
 };

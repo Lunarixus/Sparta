@@ -7,3 +7,6 @@ enabled = false
 port = 443
 keyPath = "path/to/private/key.pem"
 certPath = "path/to/certificate/cert.pem"
+
+[soundcloud] # For retrieving album artwork
+api_key = "YOUR_SOUND_CLOUD_API_KEY"

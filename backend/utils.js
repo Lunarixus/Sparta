@@ -29,6 +29,10 @@ function convertToYouTube(url) {
         return `https://www.youtube.com/watch?v=${videoId}`;
     }
 
+    if (url.includes('soundcloud.com')) {
+        return url;
+    }
+
     throw new Error('Unsupported YouTube URL format');
 }
 
@@ -72,6 +76,8 @@ async function getServiceType(url) {
             return 'YouTube (Shortlink)';
         } else if (url.includes('youtube.com')) {
             return 'YouTube';
+        } else if (url.includes('soundcloud.com')) {
+            return 'SoundCloud'
         }
     } catch (error) {
         console.error("Failed to detect URL type:", error);

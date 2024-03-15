@@ -6,6 +6,22 @@
  * of the MIT license.  See the LICENSE file for details.
  */
 
+async function fetchThumbnail(url) {
+    try {
+        if (url.includes('soundcloud.com')) {
+            return await fetchSoundCloudArtwork(url);
+        } else if (url.includes('youtube.com') || url.includes('youtu.be') || url.includes('music.youtube.com')) {
+            return await fetchYouTubeThumbnail(url);
+        } else {
+            console.log('Unsupported service type');
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching thumbnail:', error);
+        throw error;
+    }
+}
+
 async function fetchYouTubeThumbnail(url) {
     try {
         const response = await fetch('/thumbnail', {
@@ -26,6 +42,35 @@ async function fetchYouTubeThumbnail(url) {
         throw error;
     }
 }
+
+async function fetchSoundCloudArtwork(url) {
+    try {
+        const response = await fetch('/thumbnail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ url })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.thumbnailFilePath && data.thumbnailFilePath !== '/img/soundcloudlogo.png') {
+                return data.thumbnailFilePath;
+            } else {
+                console.log('Using placeholder thumbnail for SoundCloud artwork.');
+                return '/img/soundcloudlogo.png';
+            }
+        } else {
+            console.log('Failed to fetch SoundCloud artwork. Using placeholder.');
+            return '/img/soundcloudlogo.png';
+        }
+    } catch (error) {
+        console.error('Error fetching SoundCloud artwork:', error);
+        throw error;
+    }
+}
+
 
 function setBackgroundBlur(imageUrl) {
     const backgroundContainer = document.getElementById('backgroundContainer');
@@ -73,7 +118,7 @@ async function grabThumbnail(url) {
             return;
         }
 
-        const thumbnailFilePath = await fetchYouTubeThumbnail(correctedUrl);
+        const thumbnailFilePath = await fetchThumbnail(correctedUrl);
         setBackgroundBlur(thumbnailFilePath);
         setThumbnail(thumbnailFilePath);
         lastProcessedUrl = correctedUrl;
