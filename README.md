@@ -45,7 +45,7 @@ Sparta is a multi-platform music downloader right in your browser! Just set it u
 4. **Run the server:**
 
     ```bash
-    npm start
+    npm run
     ```
 
 5. **Access the application in your web browser at `http://localhost:80`.**
