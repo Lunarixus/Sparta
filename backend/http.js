@@ -14,7 +14,7 @@ const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const config = require('./config');
-const { ytDlpWrap, getTitle, downloadYouTubeThumbnail, downloadSoundCloudArtwork } = require('./ytdlpclient');
+const { downloadYouTubeThumbnail, getArtistAndTitle, ytDlpWrap } = require('./ytdlpclient');
 const { DOWNLOADS_DIR, THUMBNAILS_DIR, convertAndDownloadAudio, convertAndDownloadVideo, getServiceType, sanitizeFilename } = require('./utils');
 
 const app = express();
@@ -75,11 +75,13 @@ app.post('/download', async (req, res) => {
     try {
         let filePath;
         let contentType;
-        let videoTitle = await getTitle(url);
-        let sanitizedFilename = sanitizeFilename(videoTitle);
+
+        // Get artist and title information
+        const { artist, title } = await getArtistAndTitle(url);
+        let sanitizedFilename = sanitizeFilename(title);
 
         if (format === 'flac' || format === 'mp3' || format === 'ogg') {
-            filePath = await convertAndDownloadAudio(ytDlpWrap, url, quality, sanitizedFilename, format);
+            filePath = await convertAndDownloadAudio(ytDlpWrap, url, quality, sanitizedFilename, format, downloadYouTubeThumbnail, getArtistAndTitle);
             contentType = `audio/${format}`;
             sanitizedFilename += `.${format}`;
         } else if (format === 'mp4') {
@@ -88,6 +90,7 @@ app.post('/download', async (req, res) => {
             sanitizedFilename += '.mp4';
         }
 
+        // Set headers for file download
         res.setHeader('Content-Disposition', `attachment; filename="${sanitizedFilename}"`);
         if (contentType) {
             res.setHeader('Content-Type', contentType);
@@ -119,10 +122,11 @@ app.post('/queryinfo', async (req, res) => {
     const { url } = req.body;
 
     try {
-        const videoTitle = await getTitle(url);
+        const { artist, title } = await getArtistAndTitle(url);
         const videoPlatform = await getServiceType(url);
         const responseData = {
-            title: videoTitle,
+            artist: artist,
+            title: title,
             platform: videoPlatform
         };
 
@@ -180,3 +184,8 @@ app.post('/thumbnail/complete', (req, res) => {
 server.listen(PORT, () => {
     console.log(`Server running on ${config.https.enabled ? 'HTTPS' : 'HTTP'} port ${PORT}`);
 });
+
+module.exports = {
+    downloadYouTubeThumbnail,
+    getArtistAndTitle,
+};

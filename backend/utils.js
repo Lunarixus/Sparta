@@ -36,14 +36,14 @@ function convertToYouTube(url) {
     throw new Error('Unsupported YouTube URL format');
 }
 
-async function convertAndDownloadAudio(ytDlpWrap, url, quality, videoTitle, format) {
+async function convertAndDownloadAudio(ytDlpWrap, url, quality, videoTitle, format, downloadYouTubeThumbnail, getArtistAndTitle) {
     if (typeof url !== 'string') {
         throw new Error('URL is not a string! Report this to the developer.');
     }
 
     try {
         const YouTubeURL = convertToYouTube(url);
-        const filePath = await YouTubeDownloadAudio(ytDlpWrap, YouTubeURL, DOWNLOADS_DIR, quality, videoTitle, format);
+        const filePath = await YouTubeDownloadAudio(ytDlpWrap, YouTubeURL, DOWNLOADS_DIR, quality, videoTitle, format, downloadYouTubeThumbnail, getArtistAndTitle);
         console.log('Got File Path from function:', filePath);
         return filePath;
     } catch (error) {

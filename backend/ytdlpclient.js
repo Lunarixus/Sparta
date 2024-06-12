@@ -82,12 +82,12 @@ async function downloadSoundCloudArtwork(url) {
     }
 }
 
-async function getTitle(videoUrl) {
+async function getArtistAndTitle(videoUrl) {
     try {
         console.log('Getting title and artist for video:', videoUrl);
         const metadata = await ytDlpWrap.getVideoInfo(videoUrl, '--format', 'bestaudio/b');
         console.log('Title obtained:', metadata.title);
-        
+
         let artist;
         if (metadata.artist) {
             artist = metadata.artist;
@@ -98,9 +98,9 @@ async function getTitle(videoUrl) {
         }
 
         console.log('Artist obtained:', artist);
-        return `${artist} - ${metadata.title}`;
+        return { artist, title: metadata.title };
     } catch (error) {
-        console.error('Error getting video title:', error);
+        console.error('Error getting video title and artist:', error);
         throw error;
     }
 }
@@ -109,5 +109,5 @@ module.exports = {
     ytDlpWrap,
     downloadYouTubeThumbnail,
     downloadSoundCloudArtwork,
-    getTitle,
+    getArtistAndTitle,
 };
