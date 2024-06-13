@@ -95,7 +95,7 @@ app.get('/getIpAddress', (req, res) => {
     }
 
     console.log("Get IP Address : ", ipv4Address);
-    res.json({ ipAddress: ipv4Address });
+    res.json({ ipAddress: ipv4Address, port: PORT });
 });
 
 app.post('/download', async (req, res) => {

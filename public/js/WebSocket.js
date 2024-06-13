@@ -10,10 +10,10 @@ console.log('WebSocket.js script is running');
 async function connectWebSocketAndGetIpAddress() {
     try {
         const response = await fetch('/getIpAddress');
-        const { ipAddress } = await response.json();
+        const { ipAddress, port } = await response.json();
         const ipv4Address = ipAddress.split(':').pop();
-        const socket = new WebSocket(`${ipv4Address}:${location.port}`);
-        console.log('WebSocket running at ', `${ipv4Address}:${location.port}`);
+        const socket = new WebSocket(`${ipv4Address}:${port}`);
+        console.log('WebSocket running at ', `${ipv4Address}:${port}`);
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.log) {
