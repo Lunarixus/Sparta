@@ -65,12 +65,33 @@ wss.on('connection', function connection(ws) {
 });
 
 app.get('/getIpAddress', (req, res) => {
-    const ipAddress = req.socket.localAddress;
-    let ipv4Address = ipAddress;
+    const ipAddresses = req.socket.address();
+    let ipv4Address = null;
+    let ipv6Address = null;
 
-    // use IPV4 if IPV6
-    if (ipv4Address === '::1') {
-        ipv4Address = '127.0.0.1';
+    if (ipAddresses.hasOwnProperty('address')) {
+        if (req.socket.localFamily === 'IPv6') {
+            ipv6Address = ipAddresses.address;
+        } else {
+            ipv4Address = ipAddresses.address;
+        }
+    }
+
+    if (!ipv4Address) {
+        const interfaces = require('os').networkInterfaces();
+        for (const name of Object.keys(interfaces)) {
+            for (const net of interfaces[name]) {
+                if (net.family === 'IPv4' && !net.internal) {
+                    ipv4Address = net.address;
+                } else if (net.family === 'IPv6' && !net.internal) {
+                    ipv6Address = net.address;
+                }
+            }
+        }
+    }
+
+    if (!ipv4Address) {
+        ipv4Address = ipv6Address === '::1' ? '127.0.0.1' : ipv6Address;
     }
 
     console.log("Get IP Address : ", ipv4Address);
