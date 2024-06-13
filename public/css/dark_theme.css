@@ -235,7 +235,10 @@ select {
 .scroll-content {
     padding: 10px;
     overflow-y: auto;
+    overflow-x: hidden;
     height: 100%;
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .resize-handle {
