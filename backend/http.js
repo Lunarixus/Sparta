@@ -66,7 +66,15 @@ wss.on('connection', function connection(ws) {
 
 app.get('/getIpAddress', (req, res) => {
     const ipAddress = req.socket.localAddress;
-    res.json({ ipAddress });
+    let ipv4Address = ipAddress;
+
+    // use IPV4 if IPV6
+    if (ipv4Address === '::1') {
+        ipv4Address = '127.0.0.1';
+    }
+
+    console.log("Get IP Address : ", ipv4Address);
+    res.json({ ipAddress: ipv4Address });
 });
 
 app.post('/download', async (req, res) => {

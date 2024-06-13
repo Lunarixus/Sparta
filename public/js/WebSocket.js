@@ -5,19 +5,21 @@
  * This software may be modified and distributed under the terms
  * of the MIT license.  See the LICENSE file for details.
  */
+console.log('WebSocket.js script is running');
 
 async function connectWebSocketAndGetIpAddress() {
     try {
         const response = await fetch('/getIpAddress');
         const { ipAddress } = await response.json();
-        const ipv4Address = ipAddress.split(':').pop(); 
-        const socket = new WebSocket(`ws://${ipv4Address}:80`);
+        const ipv4Address = ipAddress.split(':').pop();
+        const socket = new WebSocket(`${ipv4Address}:${location.port}`);
+        console.log('WebSocket running at ', `${ipv4Address}:${location.port}`);
         socket.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.log) {
-                updateConsole(data.log); 
+                updateConsole(data.log);
             } else if (data.stderr) {
-                updateConsole(data.stderr); 
+                updateConsole(data.stderr);
             }
         };
     } catch (error) {
