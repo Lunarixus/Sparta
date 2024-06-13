@@ -11,9 +11,13 @@ const path = require('path');
 const { executeFFmpegCommand } = require('./ffmpeg');
 
 async function YouTubeDownloadAudio(ytDlpWrap, url, outputDir, quality, filename, format, downloadYouTubeThumbnail, getArtistAndTitle) {
-    console.log(`Downloading audio with quality: ${quality} in format: ${format}`);
+    console.log(`Starting download for URL: ${url} with quality: ${quality} and format: ${format}`);
 
     try {
+        if (!url || !outputDir || !filename || !format) {
+            throw new Error('Invalid input parameters');
+        }
+
         const webmFilePath = path.join(outputDir, `${filename}.webm`);
         let audioFilePath;
         let tempFilePath;
@@ -35,53 +39,30 @@ async function YouTubeDownloadAudio(ytDlpWrap, url, outputDir, quality, filename
                 throw new Error('Unsupported audio format');
         }
 
-        const downloadResult = await ytDlpWrap.execPromise([
-            url,
-            '-f',
-            `bestaudio/${quality}`,
-            '-o',
-            webmFilePath
-        ]);
+        console.log('Downloading audio...');
+        const downloadResult = await ytDlpWrap.execPromise([url, '-f', `bestaudio/${quality}`, '-o', webmFilePath]);
         console.log('Download Result:', downloadResult);
 
-        let ffmpegCommand;
-        switch (format) {
-            case 'flac':
-                ffmpegCommand = `ffmpeg -y -i "${webmFilePath}" -vn -ar 192000 -ac 2 -f flac "${audioFilePath}"`;
-                break;
-            case 'mp3':
-                ffmpegCommand = `ffmpeg -y -i "${webmFilePath}" -vn -ar 44100 -ac 2 -ab 320k -f mp3 "${audioFilePath}"`;
-                break;
-            case 'ogg':
-                ffmpegCommand = `ffmpeg -y -i "${webmFilePath}" -vn -acodec libvorbis -f ogg "${audioFilePath}"`;
-                break;
-            default:
-                throw new Error('Unsupported audio format');
-        }
-
-        console.log('Running command:', ffmpegCommand);
+        const ffmpegCommand = `ffmpeg -y -i "${webmFilePath}" -vn -ar 44100 -ac 2 -ab 320k -f ${format} "${audioFilePath}"`;
+        console.log('Running FFmpeg command:', ffmpegCommand);
         await executeFFmpegCommand(ffmpegCommand);
         console.log(`Conversion to ${format.toUpperCase()} complete`);
 
-        // Retrieve metadata
         const { artist, title } = await getArtistAndTitle(url);
         const thumbnailFilePath = await downloadYouTubeThumbnail(url);
 
-        // Add metadata and thumbnail
         const metadataCommand = `ffmpeg -y -i "${audioFilePath}" -i "${thumbnailFilePath}" -map 0 -map 1 -metadata artist="${artist}" -metadata title="${title}" -disposition:1 attached_pic -codec copy "${tempFilePath}"`;
         console.log('Running metadata command:', metadataCommand);
         await executeFFmpegCommand(metadataCommand);
         console.log('Metadata and artwork added to the audio file');
 
-        // Replace the original file with the temp file
         await fs.rename(tempFilePath, audioFilePath);
-
-        // Clean up temporary files
         await fs.unlink(webmFilePath);
 
+        console.log('Download and conversion complete:', audioFilePath);
         return audioFilePath;
     } catch (error) {
-        console.error('Error downloading audio:', error);
+        console.error('Error during YouTube download process:', error);
         throw error;
     }
 }
