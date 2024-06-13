@@ -67,10 +67,11 @@ function handleInputChange() {
     urlInput.addEventListener('input', async () => {
         const url = urlInput.value.trim();
 
-        if (!url) {
+        if (url) {
+            downloadButton.disabled = false;
+        } else {
             clearVideoInfo();
             downloadButton.disabled = true;
-            return;
         }
 
         try {
@@ -88,7 +89,6 @@ function handleInputChange() {
 
             const data = await response.json();
             updateVideoInfo(data);
-            downloadButton.disabled = false;
         } catch (error) {
             console.error('Error fetching video information:', error);
         }
