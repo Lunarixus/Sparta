@@ -112,20 +112,6 @@ app.post('/download', async (req, res) => {
     }
 });
 
-app.post('/deletePreviousFile', async (req, res) => {
-    const { previousFilePath } = req.body;
-
-    try {
-        const fullPath = path.join(DOWNLOADS_DIR, previousFilePath);
-        await fs.unlink(fullPath);
-        console.log('Previous file deleted:', fullPath);
-        res.sendStatus(200);
-    } catch (error) {
-        console.error('Error deleting previous file:', error);
-        res.status(500).send('Failed to delete previous file. Check server logs for details.');
-    }
-});
-
 app.post('/queryinfo', async (req, res) => {
     const { url } = req.body;
 
