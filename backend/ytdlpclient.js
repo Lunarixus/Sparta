@@ -85,7 +85,9 @@ async function downloadSoundCloudArtwork(url) {
 async function getArtistAndTitle(videoUrl) {
     try {
         console.log('Getting title and artist for video:', videoUrl);
-        const metadata = await ytDlpWrap.getVideoInfo(videoUrl, '--format', 'bestaudio/b');
+        // TODO: Add playlist support
+        const StrippedUrl = videoUrl.replace(/&list=[^&]*/, '');
+        const metadata = await ytDlpWrap.getVideoInfo(StrippedUrl, '--format', 'bestaudio/b');
         console.log('Title obtained:', metadata.title);
 
         let artist;
