@@ -63,15 +63,20 @@ async function submitForm() {
 function handleInputChange() {
     const urlInput = document.getElementById('url');
     const downloadButton = document.getElementById('downloadButton');
+    const urlPattern = /^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/;
 
     urlInput.addEventListener('input', async () => {
         const url = urlInput.value.trim();
 
-        if (url) {
+        if (urlPattern.test(url)) {
             downloadButton.disabled = false;
         } else {
             clearVideoInfo();
             downloadButton.disabled = true;
+        }
+
+        if (!urlPattern.test(url)) {
+            return;
         }
 
         try {
